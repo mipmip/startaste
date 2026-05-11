@@ -1,4 +1,6 @@
 .env
 *.db
 *.log
-*.json
+*.json.claude
+hn2json.json
+.claude
