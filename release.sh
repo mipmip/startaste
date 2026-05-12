@@ -56,12 +56,23 @@ if [[ -z "$unreleased_content" ]]; then
   exit 1
 fi
 
-for tool in jj git gh; do
+for tool in jj git gh pytest; do
   if ! command -v "$tool" &>/dev/null; then
     echo "Error: $tool is not on PATH"
     exit 1
   fi
 done
+
+####################
+# Run tests        #
+####################
+
+echo ""
+echo "Running tests..."
+pytest tests/ --cov=startaste --cov-report=term-missing
+echo ""
+echo "All tests passed."
+echo ""
 
 ####################
 # Version bump     #

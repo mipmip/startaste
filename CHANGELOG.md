@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - `pyproject.toml` for Python packaging
 - pytest test suite with HTML/JSON fixtures for offline HN testing
 - Coverage reporting via `pytest-cov`
+- Release script runs tests with coverage before making any changes
 
 ### Fixed
 - JSON export no longer overwrites stories with comments (bean startaste-1r78)

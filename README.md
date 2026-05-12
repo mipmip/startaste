@@ -80,7 +80,7 @@ Preview what would happen without making changes:
 ./release.sh minor --dry-run
 ```
 
-The script reads the current version from `VERSION`, updates `CHANGELOG.md` (promoting `[Unreleased]` entries to the new version), commits with jj, tags with git, pushes, and creates a GitHub release.
+The script runs the full test suite with coverage before making any changes. If tests fail, the release is aborted. It then reads the current version from `VERSION`, updates `CHANGELOG.md` (promoting `[Unreleased]` entries to the new version), commits with jj, tags with git, pushes, and creates a GitHub release.
 
 Add changelog entries under `## [Unreleased]` in `CHANGELOG.md` as you work.
 
