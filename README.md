@@ -1,4 +1,6 @@
-# Startaste
+<p align="center">
+  <img src="assets/logo.png" alt="StarTaste" width="200">
+</p>
 
 Coverage: 83%
 

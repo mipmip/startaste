@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}startaste{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('dashboard.static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('dashboard.static', filename='favicon.png') }}">
 </head>
 <body>
   <header>
     <nav>
-      <a href="/" class="logo">startaste</a>
+      <a href="/" class="logo"><img src="{{ url_for('dashboard.static', filename='logo.png') }}" alt="StarTaste" height="28"></a>
       <div class="nav-links">
         <a href="/">overview</a>
         <a href="/hn">hn</a>

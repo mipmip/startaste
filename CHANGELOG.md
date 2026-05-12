@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- StarTaste logo in README, dashboard nav, and favicon
 - Pluggable source architecture (`startaste/sources/`)
 - GitHub stars source (`startaste sync github`)
 - Source registry with auto-discovery of configured sources
