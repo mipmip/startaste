@@ -102,7 +102,8 @@ if [[ "$DRY_RUN" == true ]]; then
   echo "  4. jj new"
   echo "  5. git tag v$new_version"
   echo "  6. jj git push --all"
-  echo "  7. gh release create v$new_version --title \"v$new_version\" --notes <changelog section>"
+  echo "  7. git push origin v$new_version"
+  echo "  8. gh release create v$new_version --title \"v$new_version\" --notes <changelog section>"
   echo ""
   echo "No changes made."
   exit 0
@@ -133,6 +134,7 @@ git tag "v$new_version"
 ####################
 
 jj git push --all
+git push origin "v$new_version"
 
 ####################
 # GitHub release   #

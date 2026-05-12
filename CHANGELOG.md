@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed
+- release.sh now pushes git tags explicitly before creating GitHub release
+
 ## [2.1.0] - 2026-05-12
 
 ### Added
