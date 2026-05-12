@@ -50,6 +50,24 @@ Example — download all upvoted stories:
 python hn2json.py -n 200 -f ./startaste.json -s story
 ```
 
+## Releasing
+
+Bump version, update changelog, tag, and create a GitHub release:
+
+```sh
+./release.sh <major|minor|patch>
+```
+
+Preview what would happen without making changes:
+
+```sh
+./release.sh minor --dry-run
+```
+
+The script reads the current version from `VERSION`, updates `CHANGELOG.md` (promoting `[Unreleased]` entries to the new version), commits with jj, tags with git, pushes, and creates a GitHub release.
+
+Add changelog entries under `## [Unreleased]` in `CHANGELOG.md` as you work.
+
 ## History
 
 Originally developed on iPad by Luciano Fiandesio with Pythonista, modified for JSON output by John David Pressman, rewritten by Kraktus, and continued by Pim Snel as startaste.
