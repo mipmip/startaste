@@ -72,5 +72,4 @@ class Comment(Doc):
 
 
 def create_tables():
-    with database:
-        database.create_tables([Story, Comment])
+    database.create_tables([Story, Comment])

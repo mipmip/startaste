@@ -12,8 +12,8 @@ VERY_HIGH_PAGE = 10000
 
 
 def run_sync():
+    database.connect(reuse_if_open=True)
     create_tables()
-    database.connect()
 
     username, password = get_credentials()
     req = Req()

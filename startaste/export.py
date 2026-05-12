@@ -19,8 +19,8 @@ def run_export(format: str = "json", select: list[str] | None = None, file: str 
     if select is None:
         select = ["story", "comment"]
 
+    database.connect(reuse_if_open=True)
     create_tables()
-    database.connect()
 
     stories = Story.to_dict() if "story" in select else []
     comments = Comment.to_dict() if "comment" in select else []

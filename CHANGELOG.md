@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - `--format` flag on export (json default, extensible)
 - Installable binary via `nix build` / `nix run`
 - `pyproject.toml` for Python packaging
+- pytest test suite with HTML/JSON fixtures for offline HN testing
+- Coverage reporting via `pytest-cov`
 
 ### Fixed
 - JSON export no longer overwrites stories with comments (bean startaste-1r78)
