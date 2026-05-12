@@ -37,7 +37,12 @@ def main():
     subparsers = parser.add_subparsers(dest="command")
 
     # sync
-    subparsers.add_parser("sync", help="Sync upvoted items from Hacker News to local database")
+    sync_parser = subparsers.add_parser("sync", help="Sync items from sources to local database")
+    sync_parser.add_argument(
+        "source",
+        nargs="?",
+        help="Source to sync (default: all configured sources)",
+    )
 
     # export
     export_parser = subparsers.add_parser("export", help="Export items from local database")
@@ -48,11 +53,12 @@ def main():
         help="Output format (default: json)",
     )
     export_parser.add_argument(
-        "-s", "--select",
-        nargs="+",
-        choices=["story", "comment"],
-        default=["story", "comment"],
-        help="Select which items to export (default: both)",
+        "--source",
+        help="Filter by source (e.g. hn, github)",
+    )
+    export_parser.add_argument(
+        "--type",
+        help="Filter by item type (e.g. story, comment, star)",
     )
     export_parser.add_argument(
         "-f", "--file",
@@ -69,7 +75,7 @@ def main():
 
     if args.command == "sync":
         from startaste.sync import run_sync
-        run_sync()
+        run_sync(source_name=args.source)
     elif args.command == "export":
         from startaste.export import run_export
-        run_export(format=args.format, select=args.select, file=args.file)
+        run_export(format=args.format, source=args.source, type=args.type, file=args.file)

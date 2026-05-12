@@ -3,8 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from startaste.db import database, Story, Comment
+from startaste.db import database
+from startaste.sources.hn.models import HnStory, HnComment
+from startaste.sources.github.models import GithubStar
 
+ALL_MODELS = [HnStory, HnComment, GithubStar]
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
@@ -12,10 +15,10 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 def tmp_database():
     database.init(":memory:")
     database.connect()
-    database.create_tables([Story, Comment])
+    database.create_tables(ALL_MODELS)
     yield
     if not database.is_closed():
-        database.drop_tables([Story, Comment])
+        database.drop_tables(ALL_MODELS)
         database.close()
 
 

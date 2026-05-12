@@ -3,33 +3,44 @@ from __future__ import annotations
 import json
 import logging
 
-from startaste.db import Story, Comment, database, create_tables
+from startaste.db import database, create_tables
+from startaste.sources import get_sources, get_source
 
 log = logging.getLogger(__name__)
 
-exporters = {
-    "json": lambda stories, comments: json.dumps(
-        {"saved_stories": stories, "saved_comments": comments},
-        indent=2,
-    ),
-}
+
+def _pluralize(type_name: str) -> str:
+    if type_name.endswith("y"):
+        return type_name[:-1] + "ies"
+    return type_name + "s"
 
 
-def run_export(format: str = "json", select: list[str] | None = None, file: str | None = None):
-    if select is None:
-        select = ["story", "comment"]
-
+def run_export(
+    format: str = "json",
+    source: str | None = None,
+    type: str | None = None,
+    file: str | None = None,
+):
     database.connect(reuse_if_open=True)
     create_tables()
 
-    stories = Story.to_dict() if "story" in select else []
-    comments = Comment.to_dict() if "comment" in select else []
+    if source:
+        sources = [get_source(source)]
+    else:
+        sources = get_sources()
 
-    exporter = exporters.get(format)
-    if not exporter:
-        raise SystemExit(f"Error: unknown format '{format}'. Available: {', '.join(exporters)}")
+    result = {}
+    for src in sources:
+        src_data = {}
+        for model, item_type in zip(src.models, src.item_types):
+            if type and item_type != type:
+                continue
+            key = _pluralize(item_type)
+            src_data[key] = model.to_dict()
+        if src_data:
+            result[src.name] = src_data
 
-    output = exporter(stories, comments)
+    output = json.dumps(result, indent=2)
 
     if file:
         with open(file, "w") as f:

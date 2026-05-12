@@ -3,7 +3,7 @@ import json
 import pytest
 import responses
 
-from startaste.scraper import Req
+from startaste.sources.hn.scraper import Req
 from tests.conftest import load_fixture
 
 HN = "https://news.ycombinator.com"

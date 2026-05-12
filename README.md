@@ -17,48 +17,75 @@ Startaste is a self-hostable tool for owning your stars, upvotes, and favorites 
   ...more                          JSON export
 ```
 
-Right now, startaste syncs your Hacker News upvotes to a local SQLite database and exports them as JSON. The roadmap:
+Startaste syncs your Hacker News upvotes and GitHub stars to a local SQLite database and exports them as JSON. The architecture is pluggable — new sources can be added as modules under `startaste/sources/`.
 
-- **Now:** HN upvotes → SQLite → JSON export
-- **Next:** GitHub stars, unified data model
+- **Now:** HN upvotes + GitHub stars → SQLite → JSON export
 - **Later:** Self-hosted REST API, AT Protocol integration (publish your taste as a feed)
 
 ## How to use
 
-Set your Hacker News credentials:
+### Credentials
+
+Set credentials for the sources you want to use in `.env` or as environment variables:
 
 ```sh
-# in .env file or as environment variables
+# Hacker News
 HN_COMMENTS_ACCT=your_username
 HN_COMMENTS_PW=your_password
+
+# GitHub
+GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 ```
+
+**GitHub token setup:**
+
+1. Go to [github.com/settings/tokens](https://github.com/settings/tokens)
+2. Click **"Generate new token (classic)"**
+3. Name it (e.g. `startaste`) — **no scopes needed**, a scopeless token can read your own stars
+4. Copy the token into your `.env` as `GITHUB_TOKEN`
+
+Alternatively, use a **fine-grained token** at [github.com/settings/personal-access-tokens/new](https://github.com/settings/personal-access-tokens/new) with Account permissions → **Starring → Read-only**.
+
+Only configured sources are synced. If you only set HN credentials, only HN is synced.
 
 ### Sync
 
-Fetch your upvoted stories and comments from Hacker News into the local database:
+Fetch your data from configured sources into the local database:
 
 ```sh
-startaste sync
+startaste sync                    # sync all configured sources
+startaste sync hn                 # sync HN only
+startaste sync github             # sync GitHub only
 ```
 
-First run does a full sync (all pages). Subsequent runs are incremental — they stop when hitting items already in the database.
+First run does a full sync. Subsequent runs are incremental — they stop when hitting items already in the database.
 
 ### Export
 
 Export from the local database (no network calls):
 
 ```sh
-startaste export                          # JSON to stdout
-startaste export -f out.json              # JSON to file
-startaste export -s story                 # stories only
-startaste export -s comment -f comments.json  # comments to file
+startaste export                              # all sources, JSON to stdout
+startaste export --source hn                  # HN only
+startaste export --source github --type star  # GitHub stars only
+startaste export -f out.json                  # to file
 ```
 
 Options:
 
 - `--format` — output format (default: `json`)
-- `-s` / `--select` — `story`, `comment`, or both (default: both)
+- `--source` — filter by source (`hn`, `github`)
+- `--type` — filter by item type (`story`, `comment`, `star`)
 - `-f` / `--file` — output file path (default: stdout)
+
+### Sources
+
+| Source | Item Types | Env Vars |
+|--------|-----------|----------|
+| `hn` | `story`, `comment` | `HN_COMMENTS_ACCT`, `HN_COMMENTS_PW` |
+| `github` | `star` | `GITHUB_TOKEN` |
+
+Adding a new source: create a module under `startaste/sources/<name>/` implementing the `Source` protocol (see `startaste/sources/base.py`), then register it in `startaste/sources/__init__.py`.
 
 ## Testing
 
@@ -74,7 +101,7 @@ Run with coverage report:
 pytest tests/ --cov=startaste --cov-report=term-missing
 ```
 
-Tests use mocked HTTP fixtures — no HN credentials or network access needed.
+Tests use mocked HTTP fixtures — no credentials or network access needed.
 
 ## Releasing
 

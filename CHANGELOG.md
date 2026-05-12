@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+- Pluggable source architecture (`startaste/sources/`)
+- GitHub stars source (`startaste sync github`)
+- Source registry with auto-discovery of configured sources
+- `--source` and `--type` flags on export command
+- Database table migration (automatic rename on first run)
+- GitHub token setup instructions in README
+
+### Changed
+- **BREAKING**: Export JSON format changed to nested `{source: {type: [items]}}`
+- **BREAKING**: Database tables renamed (`story` → `hn_story`, `comment` → `hn_comment`)
+- HN code moved to `startaste/sources/hn/`
+- `startaste sync` now accepts optional source argument
+- `startaste export` uses `--source`/`--type` instead of `-s`
+
 ### Removed
 - `hn2json.py` legacy script (replaced by `startaste sync` + `startaste export`)
 - `hn2json.json` sample output file

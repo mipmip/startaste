@@ -1,0 +1,35 @@
+[
+  {
+    "starred_at": "2024-06-15T10:30:00Z",
+    "repo": {
+      "id": 100001,
+      "full_name": "alice/project-one",
+      "description": "A cool project",
+      "html_url": "https://github.com/alice/project-one",
+      "language": "Python",
+      "stargazers_count": 500
+    }
+  },
+  {
+    "starred_at": "2024-06-10T08:00:00Z",
+    "repo": {
+      "id": 100002,
+      "full_name": "bob/project-two",
+      "description": "Another cool project",
+      "html_url": "https://github.com/bob/project-two",
+      "language": "Rust",
+      "stargazers_count": 1200
+    }
+  },
+  {
+    "starred_at": "2024-06-05T14:20:00Z",
+    "repo": {
+      "id": 100003,
+      "full_name": "carol/project-three",
+      "description": "Yet another project",
+      "html_url": "https://github.com/carol/project-three",
+      "language": "Go",
+      "stargazers_count": 300
+    }
+  }
+]

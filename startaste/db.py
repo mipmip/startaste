@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 
 from datetime import datetime
 from peewee import SqliteDatabase, Model, CharField, DateTimeField, IntegrityError
+
+log = logging.getLogger(__name__)
 
 DATABASE = os.environ.get("STARTASTE_DB", "hn.db")
 
@@ -63,13 +66,23 @@ class Doc(BaseModel):
         ).execute()
 
 
-class Story(Doc):
-    pass
+def migrate_tables():
+    tables = database.get_tables()
+    renames = {"story": "hn_story", "comment": "hn_comment"}
+    for old, new in renames.items():
+        if old in tables and new not in tables:
+            log.info(f"Migrating table: {old} → {new}")
+            database.execute_sql(f'ALTER TABLE "{old}" RENAME TO "{new}"')
 
 
-class Comment(Doc):
-    pass
+def _get_all_models():
+    from startaste.sources import get_sources
+    models = []
+    for source in get_sources():
+        models.extend(source.models)
+    return models
 
 
 def create_tables():
-    database.create_tables([Story, Comment])
+    migrate_tables()
+    database.create_tables(_get_all_models())
