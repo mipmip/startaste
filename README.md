@@ -1,4 +1,6 @@
-# startaste
+# Startaste
+
+Coverage: 83%
 
 **Your stars are your taste.**
 
@@ -58,13 +60,21 @@ Options:
 - `-s` / `--select` — `story`, `comment`, or both (default: both)
 - `-f` / `--file` — output file path (default: stdout)
 
-### Legacy
+## Testing
 
-The original `hn2json.py` script is still available for backward compatibility:
+Run the test suite:
 
 ```sh
-python hn2json.py -n 200 -f ./startaste.json -s story
+pytest tests/ -v
 ```
+
+Run with coverage report:
+
+```sh
+pytest tests/ --cov=startaste --cov-report=term-missing
+```
+
+Tests use mocked HTTP fixtures — no HN credentials or network access needed.
 
 ## Releasing
 

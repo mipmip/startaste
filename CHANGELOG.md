@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Removed
+- `hn2json.py` legacy script (replaced by `startaste sync` + `startaste export`)
+- `hn2json.json` sample output file
+- Legacy section from README
+
 ## [2.3.0] - 2026-05-12
 
 ### Added

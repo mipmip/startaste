@@ -2,5 +2,4 @@
 *.db
 *.log
 *.json.claude
-hn2json.json
 .claude

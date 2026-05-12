@@ -69,10 +69,17 @@ done
 
 echo ""
 echo "Running tests..."
-pytest tests/ --cov=startaste --cov-report=term-missing
+COV_OUTPUT=$(pytest tests/ --cov=startaste --cov-report=term-missing 2>&1)
+echo "$COV_OUTPUT"
+COV_PCT=$(echo "$COV_OUTPUT" | grep '^TOTAL' | awk '{print $NF}')
 echo ""
-echo "All tests passed."
+echo "All tests passed. Coverage: $COV_PCT"
 echo ""
+
+# Update coverage badge in README
+if [[ -n "$COV_PCT" ]]; then
+  sed -i "s|Coverage: [0-9]*%|Coverage: ${COV_PCT}|" "$SCRIPT_DIR/README.md"
+fi
 
 ####################
 # Version bump     #
