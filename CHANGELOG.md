@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-05-12
+
 ### Added
 - StarTaste logo in README, dashboard nav, and favicon
 - Pluggable source architecture (`startaste/sources/`)
