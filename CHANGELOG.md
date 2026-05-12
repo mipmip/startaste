@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - `--source` and `--type` flags on export command
 - Database table migration (automatic rename on first run)
 - GitHub token setup instructions in README
+- `startaste serve` command — local web dashboard on port 8421
+- Dashboard service layer (reusable by future REST API)
+- Overview page with source cards, HN upvotes/comments listings, GitHub stars listing
+- Pagination on all dashboard listings
+- Light/dark mode via `prefers-color-scheme`
 
 ### Changed
 - **BREAKING**: Export JSON format changed to nested `{source: {type: [items]}}`

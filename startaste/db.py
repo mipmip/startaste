@@ -2,16 +2,13 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 
 from datetime import datetime
 from peewee import SqliteDatabase, Model, CharField, DateTimeField, IntegrityError
 
 log = logging.getLogger(__name__)
 
-DATABASE = os.environ.get("STARTASTE_DB", "hn.db")
-
-database = SqliteDatabase(DATABASE)
+database = SqliteDatabase(None)
 
 
 class BaseModel(Model):
@@ -64,6 +61,17 @@ class Doc(BaseModel):
         cls.update(body=json.dumps(doc), timestamp=timestamp).where(
             cls._id == doc["id"]
         ).execute()
+
+
+def init_database():
+    from startaste.paths import get_db_path, ensure_dirs, migrate_db_file
+    ensure_dirs()
+    migrate_db_file()
+    db_path = str(get_db_path())
+    database.init(db_path)
+    database.connect(reuse_if_open=True)
+    migrate_tables()
+    database.create_tables(_get_all_models())
 
 
 def migrate_tables():

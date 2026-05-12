@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}startaste — hn {{ tab }}{% endblock %}
+{% block content %}
+<h1>Hacker News</h1>
+<div class="tabs">
+  <a href="/hn" class="tab {% if tab == 'stories' %}active{% endif %}">upvotes</a>
+  <a href="/hn/comments" class="tab {% if tab == 'comments' %}active{% endif %}">comments</a>
+</div>
+<p class="meta">{{ total }} {% if tab == 'stories' %}upvotes{% else %}comments{% endif %} total</p>
+
+{% if tab == 'stories' %}
+<table>
+  <thead>
+    <tr>
+      <th>title</th>
+      <th>score</th>
+      <th>by</th>
+      <th>comments</th>
+      <th>date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+    {% set b = item.body if item.body is mapping else {} %}
+    <tr>
+      <td>
+        <a href="{{ b.get('url', 'https://news.ycombinator.com/item?id=' ~ b.get('id', '')) }}" target="_blank" rel="noopener">
+          {{ b.get('title', 'untitled') }}
+        </a>
+        {% if b.get('url') %}
+        <span class="domain">{{ b.get('url', '').split('/')[2] if '/' in b.get('url', '') else '' }}</span>
+        {% endif %}
+      </td>
+      <td>{{ b.get('score', '') }}</td>
+      <td>{{ b.get('by', '') }}</td>
+      <td><a href="https://news.ycombinator.com/item?id={{ b.get('id', '') }}" target="_blank" rel="noopener">{{ b.get('descendants', '') }}</a></td>
+      <td>{{ item.timestamp or '' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<table>
+  <thead>
+    <tr>
+      <th>comment</th>
+      <th>by</th>
+      <th>date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+    {% set b = item.body if item.body is mapping else {} %}
+    <tr>
+      <td>
+        <a href="https://news.ycombinator.com/item?id={{ b.get('id', '') }}" target="_blank" rel="noopener">
+          {{ b.get('text', '')[:200] | safe }}{% if b.get('text', '')|length > 200 %}...{% endif %}
+        </a>
+      </td>
+      <td>{{ b.get('by', '') }}</td>
+      <td>{{ item.timestamp or '' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if pages > 1 %}
+<nav class="pagination">
+  {% if page > 1 %}<a href="?page={{ page - 1 }}">&laquo; prev</a>{% endif %}
+  <span>page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a href="?page={{ page + 1 }}">next &raquo;</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

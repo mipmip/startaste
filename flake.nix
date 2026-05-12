@@ -28,6 +28,7 @@
           beautifulsoup4
           peewee
           python-dotenv
+          flask
         ];
       };
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import logging
 
-from startaste.db import database, create_tables
 from startaste.sources import get_sources, get_source
 
 log = logging.getLogger(__name__)
@@ -21,9 +20,6 @@ def run_export(
     type: str | None = None,
     file: str | None = None,
 ):
-    database.connect(reuse_if_open=True)
-    create_tables()
-
     if source:
         sources = [get_source(source)]
     else:
@@ -48,5 +44,3 @@ def run_export(
         log.info(f"Exported to {file}")
     else:
         print(output)
-
-    database.close()

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}startaste — github stars{% endblock %}
+{% block content %}
+<h1>GitHub Stars</h1>
+<p class="meta">{{ total }} starred repos</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>repository</th>
+      <th>description</th>
+      <th>language</th>
+      <th>stars</th>
+      <th>starred</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+    {% set b = item.body if item.body is mapping else {} %}
+    {% set repo = b.get('repo', b) if b.get('repo') else b %}
+    <tr>
+      <td>
+        <a href="{{ repo.get('html_url', '#') }}" target="_blank" rel="noopener">
+          {{ repo.get('full_name', 'unknown') }}
+        </a>
+      </td>
+      <td>{{ repo.get('description', '') or '' }}</td>
+      <td>{% if repo.get('language') %}<span class="lang">{{ repo.get('language') }}</span>{% endif %}</td>
+      <td>{{ repo.get('stargazers_count', '') }}</td>
+      <td>{{ item.timestamp or '' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if pages > 1 %}
+<nav class="pagination">
+  {% if page > 1 %}<a href="?page={{ page - 1 }}">&laquo; prev</a>{% endif %}
+  <span>page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a href="?page={{ page + 1 }}">next &raquo;</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

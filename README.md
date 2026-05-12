@@ -78,6 +78,15 @@ Options:
 - `--type` — filter by item type (`story`, `comment`, `star`)
 - `-f` / `--file` — output file path (default: stdout)
 
+### Dashboard
+
+Browse your synced data in a local web UI:
+
+```sh
+startaste serve                   # http://localhost:8421
+startaste serve --port 9000       # custom port
+```
+
 ### Sources
 
 | Source | Item Types | Env Vars |
@@ -86,6 +95,19 @@ Options:
 | `github` | `star` | `GITHUB_TOKEN` |
 
 Adding a new source: create a module under `startaste/sources/<name>/` implementing the `Source` protocol (see `startaste/sources/base.py`), then register it in `startaste/sources/__init__.py`.
+
+### Data locations
+
+By default, startaste follows the [XDG Base Directory](https://specifications.freedesktop.org/basedir-spec/latest/) convention:
+
+| File | Default path | Env var override |
+|------|-------------|-----------------|
+| Database | `~/.local/share/startaste/startaste.db` | `STARTASTE_DB` |
+| Log | `~/.local/state/startaste/startaste.log` | `STARTASTE_LOG` |
+| Data dir | `~/.local/share/startaste/` | `STARTASTE_DATA` |
+| State dir | `~/.local/state/startaste/` | `STARTASTE_STATE` |
+
+Directories are created automatically on first run. For service/daemon deployment, override via env vars (e.g. `STARTASTE_DATA=/var/lib/startaste`).
 
 ## Testing
 

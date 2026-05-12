@@ -11,13 +11,17 @@ dependencies = [
     "beautifulsoup4",
     "peewee",
     "python-dotenv",
+    "flask",
 ]
 
 [project.scripts]
 startaste = "startaste.cli:main"
 
 [tool.setuptools]
-packages = ["startaste"]
+packages = ["startaste", "startaste.dashboard", "startaste.sources", "startaste.sources.hn", "startaste.sources.github"]
+
+[tool.setuptools.package-data]
+"startaste.dashboard" = ["templates/*.html", "static/*.css"]
 
 [tool.setuptools.dynamic]
 version = {file = "VERSION"}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}startaste — overview{% endblock %}
+{% block content %}
+<h1>Sources</h1>
+<div class="cards">
+  {% for src in sources %}
+  <div class="card">
+    <h2><a href="/{{ src.name }}">{{ src.name }}</a></h2>
+    {% if src.configured %}
+      <span class="badge configured">configured</span>
+    {% else %}
+      <span class="badge not-configured">not configured</span>
+    {% endif %}
+    <dl>
+      {% for type, count in src.counts.items() %}
+      <div class="stat">
+        <dt>{{ type }}s</dt>
+        <dd>{{ count }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+    {% if src.last_sync %}
+    <p class="meta">last synced {{ src.last_sync }}</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
