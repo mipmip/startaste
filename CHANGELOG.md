@@ -21,6 +21,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 - Restructured from monolithic `hn2json.py` into `startaste` package
+- Updated all Python dependencies (beautifulsoup4, certifi, requests, urllib3, etc.)
+- Upgraded peewee 3.17.0 → 4.0.5 (pinned; nix provides 3.19.0)
+- Pinned dev dependencies (pytest, responses, pytest-cov)
+- Fixed pyproject.toml build backend and package discovery for `nix build`
+- Version detection uses `importlib.metadata` when installed as package
 
 ## [2.2.0] - 2026-05-12
 

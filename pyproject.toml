@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "startaste"
@@ -15,6 +15,9 @@ dependencies = [
 
 [project.scripts]
 startaste = "startaste.cli:main"
+
+[tool.setuptools]
+packages = ["startaste"]
 
 [tool.setuptools.dynamic]
 version = {file = "VERSION"}
