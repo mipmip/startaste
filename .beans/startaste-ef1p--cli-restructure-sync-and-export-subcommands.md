@@ -1,11 +1,12 @@
 ---
 # startaste-ef1p
 title: 'CLI restructure: sync and export subcommands'
-status: in-progress
+status: completed
+openspec-link: openspec/changes/archive/2026-05-12-cli-restructure
 type: task
 priority: normal
 created_at: 2026-05-12T09:00:44Z
-updated_at: 2026-05-12T09:01:53Z
+updated_at: 2026-05-12T12:00:00Z
 blocking:
     - startaste-1r78
 ---

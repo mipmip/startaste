@@ -289,7 +289,7 @@ def main():
             Comment.save_doc(req.get_item(comment._id))
             item_count += 1
             log_item(comment._id, item_count, count_empty)
-        json_items["saved_stories"] = Comment.to_dict()
+        json_items["saved_comments"] = Comment.to_dict()
     if arguments.file:
         with open(arguments.file, "w") as outfile:
             json.dump(json_items, outfile, indent=2)

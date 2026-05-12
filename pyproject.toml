@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "startaste"
+dynamic = ["version"]
+requires-python = ">=3.10"
+dependencies = [
+    "requests",
+    "beautifulsoup4",
+    "peewee",
+    "python-dotenv",
+]
+
+[project.scripts]
+startaste = "startaste.cli:main"
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}

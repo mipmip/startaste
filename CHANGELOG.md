@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+- CLI with `startaste sync` and `startaste export` subcommands
+- Auto-detecting full/incremental sync (no more `-n` page count)
+- Incremental sync stops when all IDs on a page are already known
+- `--format` flag on export (json default, extensible)
+- Installable binary via `nix build` / `nix run`
+- `pyproject.toml` for Python packaging
+
+### Fixed
+- JSON export no longer overwrites stories with comments (bean startaste-1r78)
+
+### Changed
+- Restructured from monolithic `hn2json.py` into `startaste` package
+
 ## [2.2.0] - 2026-05-12
 
 ### Fixed

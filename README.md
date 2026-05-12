@@ -15,10 +15,10 @@ Startaste is a self-hostable tool for owning your stars, upvotes, and favorites 
   ...more                          JSON export
 ```
 
-Right now, startaste syncs your Hacker News upvotes to JSON. The roadmap:
+Right now, startaste syncs your Hacker News upvotes to a local SQLite database and exports them as JSON. The roadmap:
 
-- **Now:** HN upvotes → JSON export
-- **Next:** GitHub stars, unified data model, CLI with subcommands
+- **Now:** HN upvotes → SQLite → JSON export
+- **Next:** GitHub stars, unified data model
 - **Later:** Self-hosted REST API, AT Protocol integration (publish your taste as a feed)
 
 ## How to use
@@ -31,20 +31,36 @@ HN_COMMENTS_ACCT=your_username
 HN_COMMENTS_PW=your_password
 ```
 
-Run:
+### Sync
+
+Fetch your upvoted stories and comments from Hacker News into the local database:
 
 ```sh
-python hn2json.py -n [pages] -f [output.json]
+startaste sync
+```
+
+First run does a full sync (all pages). Subsequent runs are incremental — they stop when hitting items already in the database.
+
+### Export
+
+Export from the local database (no network calls):
+
+```sh
+startaste export                          # JSON to stdout
+startaste export -f out.json              # JSON to file
+startaste export -s story                 # stories only
+startaste export -s comment -f comments.json  # comments to file
 ```
 
 Options:
 
-- `-n` / `--number` — pages to grab (default: 1, use a high number to get everything)
-- `-f` / `--file` — output file path (default: stdout)
+- `--format` — output format (default: `json`)
 - `-s` / `--select` — `story`, `comment`, or both (default: both)
-- `-l` / `--log` — log level: DEBUG, INFO, WARNING, ERROR, CRITICAL (default: INFO)
+- `-f` / `--file` — output file path (default: stdout)
 
-Example — download all upvoted stories:
+### Legacy
+
+The original `hn2json.py` script is still available for backward compatibility:
 
 ```sh
 python hn2json.py -n 200 -f ./startaste.json -s story

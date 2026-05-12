@@ -1,5 +1,5 @@
 {
-  description = "Construct development shell from requirements.txt";
+  description = "startaste — own your stars, upvotes, and favorites";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
@@ -16,16 +16,24 @@
 
       pythonEnv =
           pkgs.python3.withPackages (project.renderers.withPackages { inherit python; });
-        # Assert that versions from nixpkgs matches what's described in requirements.txt
-        # In projects that are overly strict about pinning it might be best to remove this assertion entirely.
-        #        assert project.validators.validateVersionConstraints { inherit python; } == { };
-        #        (
-        #          # Render requirements.txt into a Python withPackages environment
-        #          pkgs.python3.withPackages (project.renderers.withPackages { inherit python; })
-        #        );
+
+      startaste = python.pkgs.buildPythonApplication {
+        pname = "startaste";
+        version = builtins.replaceStrings [ "\n" ] [ "" ] (builtins.readFile ./VERSION);
+        src = ./.;
+        format = "pyproject";
+        build-system = [ python.pkgs.setuptools ];
+        dependencies = with python.pkgs; [
+          requests
+          beautifulsoup4
+          peewee
+          python-dotenv
+        ];
+      };
 
     in
     {
+      packages.x86_64-linux.default = startaste;
       devShells.x86_64-linux.default = pkgs.mkShell { packages = [ pythonEnv ]; };
     };
 }
