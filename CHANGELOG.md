@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-05-12
+
 ### Added
 - VERSION file as single source of truth for semver
 - CHANGELOG.md in Keep a Changelog format
