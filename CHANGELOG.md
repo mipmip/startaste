@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed
+- `.env` is now loaded from the working directory by every subcommand, so
+  installed builds (nix package, `nix run`, virtualenv) pick up credentials
+  again instead of only working from a source checkout
+
 ## [3.0.0] - 2026-05-12
 
 ### Added

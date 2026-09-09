@@ -5,6 +5,8 @@ import logging
 import logging.handlers
 import sys
 
+from dotenv import find_dotenv, load_dotenv
+
 from startaste import __version__
 
 
@@ -31,6 +33,12 @@ def setup_logging(level: str = "INFO"):
 
 
 def main():
+    # Load .env before anything reads configuration: path overrides, logging
+    # setup and source credentials all go through os.getenv. usecwd anchors the
+    # search at the working directory, so an installed build finds the user's
+    # .env instead of searching next to its own package files.
+    load_dotenv(find_dotenv(usecwd=True))
+
     parser = argparse.ArgumentParser(
         prog="startaste",
         description="Own your stars, upvotes, and favorites.",

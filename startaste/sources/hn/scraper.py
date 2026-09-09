@@ -6,11 +6,8 @@ import time
 
 import requests
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-
-load_dotenv()
 
 log = logging.getLogger(__name__)
 
