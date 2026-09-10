@@ -57,11 +57,12 @@ class HnSource(Source):
         count = model.count_empty()
         log.info(f"Fetching metadata for {count} {label}")
 
+        singular = "comment" if comments else "story"
         fetched = 0
         for item in empty:
             model.save_doc(req.get_item(item._id))
             fetched += 1
-            log.info(f"Got {label[:-1]} {item._id} ({fetched} of {count})")
+            log.info(f"Got {singular} {item._id} ({fetched} of {count})")
 
     def _scrape_all(self, req, username, comments, klass):
         return req.scrape_ids(username, comments, klass)

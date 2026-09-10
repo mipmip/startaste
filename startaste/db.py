@@ -27,11 +27,12 @@ class Doc(BaseModel):
 
     @classmethod
     def save_ids(cls, ids: list[str]):
-        for _id in ids:
-            try:
-                cls.create(_id=_id)
-            except IntegrityError:
-                pass
+        with database.atomic():
+            for _id in ids:
+                try:
+                    cls.create(_id=_id)
+                except IntegrityError:
+                    pass
 
     @classmethod
     def count_empty(cls) -> int:

@@ -3,3 +3,5 @@
 *.log
 *.json.claude
 .claude
+__pycache__/
+*.pyc
