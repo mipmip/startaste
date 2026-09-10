@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Fixed
+- The database is opened in WAL mode with a busy timeout, so reading (dashboard,
+  export) while a sync is writing no longer fails with "database is locked" —
+  required before startaste can run as a service alongside other readers
 - HN sync now follows the `More` cursor on `/upvoted` instead of a `p=` page
   parameter Hacker News ignores there — a full sync no longer loops over page
   one and discards everything it scraped

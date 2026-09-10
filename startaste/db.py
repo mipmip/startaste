@@ -8,7 +8,12 @@ from peewee import SqliteDatabase, Model, CharField, DateTimeField, IntegrityErr
 
 log = logging.getLogger(__name__)
 
-database = SqliteDatabase(None)
+# WAL so a reader is not blocked by a writer's transaction, and a busy timeout
+# so a contended database is waited on rather than failed on. Set here rather
+# than in init_database(): peewee keeps constructor pragmas across init().
+PRAGMAS = {"journal_mode": "wal", "busy_timeout": 10000}
+
+database = SqliteDatabase(None, pragmas=PRAGMAS)
 
 
 class BaseModel(Model):
