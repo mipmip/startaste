@@ -24,6 +24,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
   The dashboard has no authentication, so only widen it on a trusted network
 
 ### Fixed
+- `release.sh` now checks that jj can actually operate in the checkout, not just
+  that it is installed — previously a plain git checkout failed part-way through
+  a release, after VERSION and the changelog had been rewritten
+- `release.sh --dry-run` no longer rewrites the README coverage badge, so its
+  "No changes made" is true
 - The database is opened in WAL mode with a busy timeout, so reading (dashboard,
   export) while a sync is writing no longer fails with "database is locked" —
   required before startaste can run as a service alongside other readers

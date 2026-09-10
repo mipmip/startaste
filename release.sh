@@ -63,6 +63,20 @@ for tool in jj git gh pytest; do
   fi
 done
 
+# A tool on PATH is not the same as a usable repository. The VCS steps run
+# after VERSION and the changelog have been rewritten, so a checkout jj cannot
+# operate in has to fail here rather than half-way through a release.
+if ! jj -R "$SCRIPT_DIR" root &>/dev/null; then
+  echo "Error: no jj repo in $SCRIPT_DIR — jj is needed to commit the release"
+  echo "Fix: run 'jj git init --colocate' in the repository root"
+  exit 1
+fi
+
+if ! git -C "$SCRIPT_DIR" rev-parse --git-dir &>/dev/null; then
+  echo "Error: $SCRIPT_DIR is not a git repository — git is needed to tag the release"
+  exit 1
+fi
+
 ####################
 # Run tests        #
 ####################
@@ -76,8 +90,9 @@ echo ""
 echo "All tests passed. Coverage: $COV_PCT"
 echo ""
 
-# Update coverage badge in README
-if [[ -n "$COV_PCT" ]]; then
+# Update coverage badge in README. Not during a dry run: it runs before the
+# dry-run branch, which reports "No changes made".
+if [[ -n "$COV_PCT" && "$DRY_RUN" == false ]]; then
   sed -i "s|Coverage: [0-9]*%|Coverage: ${COV_PCT}|" "$SCRIPT_DIR/README.md"
 fi
 
