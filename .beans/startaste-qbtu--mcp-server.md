@@ -1,11 +1,11 @@
 ---
 # startaste-qbtu
 title: mcp server
-status: todo
+status: in-progress
 type: task
 priority: normal
 created_at: 2026-09-09T12:11:08Z
-updated_at: 2026-09-10T15:06:48Z
+updated_at: 2026-09-10T15:41:05Z
 ---
 
 authenticated for one person only. See how the mcp server works of Linny.vim (github.com/linden-project)
