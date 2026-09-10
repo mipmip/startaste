@@ -2,7 +2,7 @@
   <img src="assets/logo.png" alt="StarTaste" width="200">
 </p>
 
-Coverage: 83%
+Coverage: 95%
 
 **Your stars are your taste.**
 

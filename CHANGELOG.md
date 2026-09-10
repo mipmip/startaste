@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-09-10
+
 ### Added
 - MCP server (`startaste mcp`): serves the collection to Claude clients over
   streamable HTTP with seven read-only tools — search stars, search upvotes,
