@@ -1,10 +1,11 @@
 ---
 # startaste-48g1
 title: isolate tests from the real XDG directories
-status: todo
+status: completed
 type: bug
+priority: normal
 created_at: 2026-09-10T18:47:24Z
-updated_at: 2026-09-10T18:47:24Z
+updated_at: 2026-09-10T19:03:10Z
 ---
 
 The test suite writes into the real XDG directories. Verified by running it with
@@ -33,3 +34,29 @@ Fix: one autouse fixture in `conftest.py` pointing `STARTASTE_DATA`,
 test, so no test can reach a real path by forgetting to override it. The
 per-test overrides in `test_cli_serve.py`, `test_db_pragmas.py`,
 `test_db_readonly.py` and `test_paths.py` then become redundant.
+
+## Summary of Changes
+
+Shipped as openspec change `isolate-tests-from-real-paths`, archived at
+`openspec/changes/archive/2026-09-10-isolate-tests-from-real-paths`.
+
+One autouse fixture in `tests/conftest.py` points `STARTASTE_DATA`,
+`STARTASTE_STATE`, `STARTASTE_DB` and `STARTASTE_LOG` at each test's `tmp_path`,
+so isolation is enforced centrally rather than arranged per test. It uses the
+documented env overrides, so no production code changed.
+
+The per-test overrides in `test_cli_serve.py`, `test_db_pragmas.py` and
+`test_db_readonly.py` are gone. One deliberate override stayed, with a comment
+saying why: the missing-database test points `STARTASTE_DB` at a path with no
+file, which is the behaviour it asserts rather than isolation.
+
+Verified with a clean HOME: the suite now creates nothing startaste-related
+under it, where before it created `<HOME>/state/startaste/startaste.log` and
+`<HOME>/data/startaste/`. 128 tests pass, coverage 94%, and `test_paths.py`'s
+default-location tests still pass because they clear the overrides themselves.
+Fixture ordering was checked by swapping the two autouse fixtures and re-running
+— it does not matter.
+
+The `testing` capability's isolation requirement now also states that isolation
+is enforced by default, so a test that configures nothing still cannot reach a
+real path.

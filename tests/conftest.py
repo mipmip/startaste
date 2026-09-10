@@ -12,6 +12,20 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture(autouse=True)
+def isolated_paths(tmp_path, monkeypatch):
+    """Resolve every path inside the test's own tmp_path.
+
+    Enforced centrally rather than per test: a test that overrides nothing must
+    still be unable to reach the developer's real data, state, database or log.
+    Uses the documented STARTASTE_* overrides, so no production code is involved.
+    """
+    monkeypatch.setenv("STARTASTE_DATA", str(tmp_path))
+    monkeypatch.setenv("STARTASTE_STATE", str(tmp_path))
+    monkeypatch.setenv("STARTASTE_DB", str(tmp_path / "startaste.db"))
+    monkeypatch.setenv("STARTASTE_LOG", str(tmp_path / "startaste.log"))
+
+
+@pytest.fixture(autouse=True)
 def tmp_database():
     database.init(":memory:")
     database.connect()

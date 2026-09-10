@@ -13,12 +13,9 @@ class _FakeApp:
 
 
 @pytest.fixture
-def fake_app(monkeypatch, tmp_path):
+def fake_app(monkeypatch):
     app = _FakeApp()
     monkeypatch.setattr(startaste.dashboard, "create_app", lambda: app)
-    monkeypatch.setenv("STARTASTE_DB", str(tmp_path / "t.db"))
-    monkeypatch.setenv("STARTASTE_DATA", str(tmp_path))
-    monkeypatch.setenv("STARTASTE_STATE", str(tmp_path))
     return app
 
 
@@ -69,7 +66,6 @@ class TestMcpTokenCommand:
     def test_prints_a_token_and_a_matching_record(self, monkeypatch, capsys, tmp_path):
         from startaste.mcp.auth import hash_token
 
-        monkeypatch.setenv("STARTASTE_DATA", str(tmp_path))
         monkeypatch.setattr("sys.argv", ["startaste", "mcp-token", "--name", "laptop"])
         main()
 
