@@ -34,6 +34,8 @@
             peewee
             python-dotenv
             flask
+            mcp
+            uvicorn
           ];
         };
 

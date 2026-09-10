@@ -80,6 +80,30 @@ def init_database():
     database.create_tables(_get_all_models())
 
 
+def open_readonly():
+    """Open the database read-only, for surfaces that must never write.
+
+    SQLite refuses writes on this connection, so the guarantee does not depend
+    on application code remembering. Verified to work against a WAL database
+    with a live writer. Only busy_timeout is set: asking a read-only connection
+    for a journal mode it is not already in would fail.
+    """
+    from startaste.paths import get_db_path
+
+    db_path = get_db_path()
+    if not db_path.exists():
+        raise SystemExit(
+            f"Error: no database at {db_path}. Run 'startaste sync' first."
+        )
+
+    database.init(
+        f"file:{db_path}?mode=ro",
+        uri=True,
+        pragmas={"busy_timeout": PRAGMAS["busy_timeout"]},
+    )
+    database.connect(reuse_if_open=True)
+
+
 def migrate_tables():
     tables = database.get_tables()
     renames = {"story": "hn_story", "comment": "hn_comment"}

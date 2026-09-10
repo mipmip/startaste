@@ -91,6 +91,31 @@ def main():
         help="Port to serve on (default: 8421)",
     )
 
+    # mcp
+    mcp_parser = subparsers.add_parser("mcp", help="Serve the MCP endpoint for Claude clients")
+    mcp_parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Address to bind (default: 127.0.0.1). TLS terminates upstream.",
+    )
+    mcp_parser.add_argument(
+        "--port",
+        type=int,
+        default=8766,
+        help="Port to serve on (default: 8766)",
+    )
+    mcp_parser.add_argument(
+        "--tokens-file",
+        required=True,
+        help="Path to the JSON file of hashed bearer-token records",
+    )
+
+    # mcp-token
+    subparsers.add_parser(
+        "mcp-token",
+        help="Mint a bearer token and print the record to add to the tokens file",
+    ).add_argument("--name", default="default", help="Name for the token record")
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -98,6 +123,21 @@ def main():
         sys.exit(1)
 
     setup_logging()
+
+    # Minting a token touches no data, so it must not create a database.
+    if args.command == "mcp-token":
+        from startaste.mcp.auth import generate_token, hash_token
+        token = generate_token()
+        print(f"token (shown once, store it now):\n  {token}\n")
+        print("record to add to the tokens file:")
+        print(f'  {{"name": "{args.name}", "hash": "{hash_token(token)}", "scopes": ["read"]}}')
+        return
+
+    # The MCP server opens the database read-only and never creates one.
+    if args.command == "mcp":
+        from startaste.mcp.server import serve
+        serve(host=args.host, port=args.port, tokens_file=args.tokens_file)
+        return
 
     from startaste.db import init_database
     init_database()

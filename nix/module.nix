@@ -109,6 +109,43 @@ in
       default = 8421;
       description = "Port for the dashboard.";
     };
+
+    mcp.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Serve the MCP endpoint for Claude clients. Reads the database
+        read-only; requires a bearer token on /mcp, while /healthz stays open.
+      '';
+    };
+
+    mcp.listenAddress = lib.mkOption {
+      type = lib.types.str;
+      default = "127.0.0.1";
+      example = "192.168.100.2";
+      description = ''
+        Address for the MCP server to bind. Defaults to loopback: TLS is
+        expected to terminate on an upstream reverse proxy, so a wider bind
+        should be a trusted network only.
+      '';
+    };
+
+    mcp.port = lib.mkOption {
+      type = lib.types.port;
+      default = 8766;
+      description = "Port for the MCP server. Must differ from dashboard.port.";
+    };
+
+    mcp.tokensFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      example = "/run/agenix/startaste-mcp-tokens";
+      description = ''
+        Path to the JSON file of hashed bearer-token records. A PATH, never a
+        token value — a token in a Nix option would land in the world-readable
+        store. Mint records with `startaste mcp-token`.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable (
@@ -197,6 +234,44 @@ in
           OnUnitActiveSec = cfg.sync.interval;
           Unit = "startaste-sync.service";
         };
+      };
+
+      assertions = [
+        {
+          assertion = !cfg.mcp.enable || cfg.mcp.tokensFile != null;
+          message = "services.startaste.mcp.tokensFile must be set when mcp.enable is true.";
+        }
+        {
+          assertion = !(cfg.mcp.enable && cfg.dashboard.enable)
+            || cfg.mcp.port != cfg.dashboard.port;
+          message = "services.startaste: mcp.port and dashboard.port must differ.";
+        }
+      ];
+
+      systemd.services.startaste-mcp = lib.mkIf cfg.mcp.enable {
+        description = "startaste MCP server";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "network.target" ];
+        inherit environment;
+        serviceConfig = common // {
+          ExecStart = lib.escapeShellArgs [
+            "${cfg.package}/bin/startaste"
+            "mcp"
+            "--host"
+            cfg.mcp.listenAddress
+            "--port"
+            (toString cfg.mcp.port)
+            "--tokens-file"
+            (toString cfg.mcp.tokensFile)
+          ];
+          # The server opens the database read-only and refuses to create one,
+          # so on a host that has never synced it exits until the first sync
+          # run. Keep retrying indefinitely rather than exhausting the start
+          # limit and staying failed until someone restarts it by hand.
+          Restart = "always";
+          RestartSec = 30;
+        };
+        unitConfig.StartLimitIntervalSec = 0;
       };
 
       systemd.services.startaste-dashboard = lib.mkIf cfg.dashboard.enable {

@@ -18,7 +18,7 @@ dependencies = [
 startaste = "startaste.cli:main"
 
 [tool.setuptools]
-packages = ["startaste", "startaste.dashboard", "startaste.sources", "startaste.sources.hn", "startaste.sources.github"]
+packages = ["startaste", "startaste.dashboard", "startaste.mcp", "startaste.sources", "startaste.sources.hn", "startaste.sources.github"]
 
 [tool.setuptools.package-data]
 "startaste.dashboard" = ["templates/*.html", "static/*.css"]

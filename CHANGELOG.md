@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- MCP server (`startaste mcp`): serves the collection to Claude clients over
+  streamable HTTP with seven read-only tools — search stars, search upvotes,
+  fetch one item, overview, and top topics / languages / upvoted domains.
+  Bearer-token authenticated (`startaste mcp-token` mints one), `/healthz` open,
+  and the database is opened read-only so no tool can write
+- `services.startaste.mcp.*` NixOS options for the MCP server
 - NixOS module (`nixosModules.startaste`) and overlay (`overlays.default`):
   scheduled sync on a systemd timer and the dashboard as hardened units, with
   state under `/var/lib/startaste` and credentials from an `environmentFile`
