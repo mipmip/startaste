@@ -47,7 +47,44 @@ class TestEndpoints:
         with TestClient(build_app(tokens_file)) as client:
             response = client.post("/mcp", json={})
         assert response.status_code == 401
-        assert response.headers["www-authenticate"] == "Bearer"
+
+    def test_rejection_carries_no_authentication_challenge(self, tokens_file):
+        # A bare `Bearer` challenge names no realm and points at no metadata, so
+        # it tells a client nothing — while sending one that follows the MCP
+        # authorization flow off to look for OAuth metadata that does not exist.
+        with TestClient(build_app(tokens_file)) as client:
+            response = client.post("/mcp", json={})
+        assert "www-authenticate" not in response.headers
+
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/.well-known/oauth-protected-resource",
+            "/.well-known/oauth-protected-resource/mcp",
+            "/.well-known/oauth-authorization-server",
+            "/nope",
+        ],
+    )
+    def test_unserved_paths_are_not_found_not_unauthorized(self, tokens_file, path):
+        # 404 lets a client conclude there is no OAuth metadata and fall back to
+        # its configured token. 401 left it unable to either discover or rule out
+        # OAuth, so it gave up before trying the token at all.
+        with TestClient(build_app(tokens_file)) as client:
+            response = client.get(path)
+        assert response.status_code == 404
+
+    def test_an_unserved_path_discloses_nothing(self, tokens_file):
+        with TestClient(build_app(tokens_file)) as client:
+            response = client.get("/.well-known/oauth-protected-resource")
+        assert response.status_code == 404
+        assert "startaste" not in response.text.lower()
+
+    def test_a_path_merely_prefixed_with_mcp_is_not_the_endpoint(self, tokens_file):
+        # The guard matches "/mcp" and "/mcp/...", not any path starting with
+        # those three letters.
+        with TestClient(build_app(tokens_file)) as client:
+            response = client.get("/mcpsomething")
+        assert response.status_code == 404
 
     def test_mcp_with_a_wrong_token_is_rejected(self, tokens_file):
         with TestClient(build_app(tokens_file)) as client:

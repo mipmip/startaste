@@ -109,15 +109,32 @@ async def _healthz(request):
 
 
 class BearerAuthMiddleware:
-    """Requires a valid bearer token on everything except the open paths."""
+    """Requires a valid bearer token on the MCP endpoint.
 
-    def __init__(self, app, authenticator: StaticTokenAuthenticator, open_paths=("/healthz",)):
+    Scoped to `protected_prefix` rather than guarding the whole app, so a path
+    the server does not serve reaches the router and is answered 404. Guarding
+    everything made unserved paths answer 401, which breaks clients following
+    the MCP authorization flow: a 401 sends them looking for protected-resource
+    metadata under /.well-known/, and a 401 there means they can neither
+    complete discovery nor conclude there is none, so they give up instead of
+    using the static token they were given.
+
+    For the same reason the rejection carries no WWW-Authenticate challenge. A
+    bare `Bearer` challenge names no realm and points at no metadata, so it
+    tells a client nothing it can act on while sending it down that dead end.
+    """
+
+    def __init__(self, app, authenticator: StaticTokenAuthenticator, protected_prefix="/mcp"):
         self.app = app
         self.authenticator = authenticator
-        self.open_paths = tuple(open_paths)
+        self.protected_prefix = protected_prefix
+
+    def _is_protected(self, path: str) -> bool:
+        # "/mcp" and "/mcp/..." are the endpoint; "/mcpsomething" is not.
+        return path == self.protected_prefix or path.startswith(self.protected_prefix + "/")
 
     async def __call__(self, scope, receive, send):
-        if scope.get("type") != "http" or scope.get("path") in self.open_paths:
+        if scope.get("type") != "http" or not self._is_protected(scope.get("path", "")):
             await self.app(scope, receive, send)
             return
 
@@ -126,11 +143,7 @@ class BearerAuthMiddleware:
         try:
             identity = self.authenticator.authenticate_header(raw or None)
         except Unauthorized:
-            response = JSONResponse(
-                {"error": "unauthorized"},
-                status_code=401,
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+            response = JSONResponse({"error": "unauthorized"}, status_code=401)
             await response(scope, receive, send)
             return
 
@@ -139,7 +152,11 @@ class BearerAuthMiddleware:
 
 
 def build_app(tokens_file):
-    """The ASGI app: /healthz open, everything else bearer-authenticated."""
+    """The ASGI app: the MCP endpoint bearer-authenticated, everything else routed.
+
+    Only /mcp is guarded, so /healthz stays open and any other path 404s rather
+    than claiming to need credentials.
+    """
     records = load_records(tokens_file)
     if not records:
         raise SystemExit(f"Error: no usable token records in {tokens_file}")

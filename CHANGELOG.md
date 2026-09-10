@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed
+- MCP clients that follow the authorization flow (e.g. the Claude connector)
+  could not connect: authentication guarded the whole server, so paths it does
+  not serve — including the `/.well-known/` OAuth discovery paths — answered
+  `401` instead of `404`. A client could then neither discover OAuth metadata nor
+  rule it out, and gave up before using its configured bearer token. Auth is now
+  scoped to `/mcp`, and rejections no longer carry an uninformative bare
+  `WWW-Authenticate: Bearer` challenge
+
 ## [3.1.0] - 2026-09-10
 
 ### Added
