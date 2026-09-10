@@ -109,6 +109,19 @@ def main():
         required=True,
         help="Path to the JSON file of hashed bearer-token records",
     )
+    mcp_parser.add_argument(
+        "--allowed-host",
+        action="append",
+        default=[],
+        metavar="HOST",
+        help=(
+            "Public hostname this server is reached by, e.g. taste.example.com. "
+            "Repeatable. Required when an HTTPS reverse proxy fronts the server: "
+            "the transport checks the Host header against an allow-list, and a "
+            "forwarded public hostname is otherwise refused with 421. Loopback "
+            "and the bound address are always allowed."
+        ),
+    )
 
     # mcp-token
     subparsers.add_parser(
@@ -136,7 +149,12 @@ def main():
     # The MCP server opens the database read-only and never creates one.
     if args.command == "mcp":
         from startaste.mcp.server import serve
-        serve(host=args.host, port=args.port, tokens_file=args.tokens_file)
+        serve(
+            host=args.host,
+            port=args.port,
+            tokens_file=args.tokens_file,
+            allowed_hosts=args.allowed_host,
+        )
         return
 
     from startaste.db import init_database

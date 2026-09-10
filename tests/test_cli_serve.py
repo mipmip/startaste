@@ -46,7 +46,12 @@ class TestMcpCommand:
 
         monkeypatch.setattr("sys.argv", ["startaste", "mcp", "--tokens-file", str(tokens)])
         main()
-        assert called == {"host": "127.0.0.1", "port": 8766, "tokens_file": str(tokens)}
+        assert called == {
+            "host": "127.0.0.1",
+            "port": 8766,
+            "tokens_file": str(tokens),
+            "allowed_hosts": [],
+        }
 
         called.clear()
         monkeypatch.setattr("sys.argv", [
@@ -54,7 +59,34 @@ class TestMcpCommand:
             "--host", "192.168.100.2", "--port", "9999",
         ])
         main()
-        assert called == {"host": "192.168.100.2", "port": 9999, "tokens_file": str(tokens)}
+        assert called == {
+            "host": "192.168.100.2",
+            "port": 9999,
+            "tokens_file": str(tokens),
+            "allowed_hosts": [],
+        }
+
+    def test_allowed_host_is_repeatable_and_passed_through(self, monkeypatch, tmp_path):
+        called = {}
+        import startaste.mcp.server
+
+        monkeypatch.setattr(
+            startaste.mcp.server, "serve", lambda **kw: called.update(kw)
+        )
+        tokens = tmp_path / "tokens.json"
+        tokens.write_text("[]")
+
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "startaste", "mcp",
+                "--tokens-file", str(tokens),
+                "--allowed-host", "taste.example.com",
+                "--allowed-host", "taste.internal",
+            ],
+        )
+        main()
+        assert called["allowed_hosts"] == ["taste.example.com", "taste.internal"]
 
     def test_tokens_file_is_required(self, monkeypatch):
         monkeypatch.setattr("sys.argv", ["startaste", "mcp"])

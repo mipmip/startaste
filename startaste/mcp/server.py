@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 
@@ -27,8 +28,48 @@ specific items, and get_item for a full record. Every search is bounded: check
 """
 
 
-def build_mcp() -> FastMCP:
-    mcp = FastMCP("startaste", instructions=INSTRUCTIONS)
+# Loopback is always allowed so local probes and health checks need no config.
+LOOPBACK_HOSTS = ["127.0.0.1:*", "localhost:*", "[::1]:*"]
+LOOPBACK_ORIGINS = ["http://127.0.0.1:*", "http://localhost:*", "http://[::1]:*"]
+
+
+def transport_security(allowed_hosts=()) -> TransportSecuritySettings:
+    """Host/Origin allow-list for the MCP transport's DNS-rebinding defence.
+
+    FastMCP turns that defence on by itself when its `host` setting is loopback —
+    which is its default, and which we never override because uvicorn does the
+    binding. The effect was that a server behind an HTTPS reverse proxy answered
+    every request `421 Invalid Host header`: the proxy forwards the public
+    hostname, and only loopback was on the list.
+
+    So build the list explicitly from what the deployment actually serves. The
+    defence stays ON; declaring a hostname widens the list, it does not disable
+    anything.
+    """
+    hosts = list(LOOPBACK_HOSTS)
+    origins = list(LOOPBACK_ORIGINS)
+    for host in allowed_hosts:
+        if not host:
+            continue
+        hosts.append(host)
+        origins.extend([f"https://{host}", f"http://{host}"])
+        if ":" not in host:
+            # A proxy may or may not include the port in Host; accept both.
+            hosts.append(f"{host}:*")
+            origins.extend([f"https://{host}:*", f"http://{host}:*"])
+    return TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=hosts,
+        allowed_origins=origins,
+    )
+
+
+def build_mcp(allowed_hosts=()) -> FastMCP:
+    mcp = FastMCP(
+        "startaste",
+        instructions=INSTRUCTIONS,
+        transport_security=transport_security(allowed_hosts),
+    )
 
     @mcp.tool()
     def search_stars(
@@ -151,7 +192,7 @@ class BearerAuthMiddleware:
         await self.app(scope, receive, send)
 
 
-def build_app(tokens_file):
+def build_app(tokens_file, allowed_hosts=()):
     """The ASGI app: the MCP endpoint bearer-authenticated, everything else routed.
 
     Only /mcp is guarded, so /healthz stays open and any other path 404s rather
@@ -161,19 +202,21 @@ def build_app(tokens_file):
     if not records:
         raise SystemExit(f"Error: no usable token records in {tokens_file}")
 
-    app = build_mcp().streamable_http_app()
+    app = build_mcp(allowed_hosts).streamable_http_app()
     # Added to the app FastMCP built, so its session-manager lifespan is kept.
     app.router.routes.insert(0, Route("/healthz", _healthz, methods=["GET"]))
     app.add_middleware(BearerAuthMiddleware, authenticator=StaticTokenAuthenticator(records))
     return app
 
 
-def serve(host: str, port: int, tokens_file: str) -> None:
+def serve(host: str, port: int, tokens_file: str, allowed_hosts=()) -> None:
     import uvicorn
 
     from startaste.db import open_readonly
 
     open_readonly()
-    app = build_app(tokens_file)
+    # The address we bind is always a legitimate Host: it is how a client on the
+    # same network reaches us directly, without anyone having to declare it.
+    app = build_app(tokens_file, [f"{host}:{port}", *allowed_hosts])
     log.info(f"MCP server on http://{host}:{port}/mcp")
     uvicorn.run(app, host=host, port=port, log_level="info")

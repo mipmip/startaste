@@ -5,7 +5,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from startaste.mcp.auth import hash_token
-from startaste.mcp.server import build_app, build_mcp
+from startaste.mcp.server import build_app, build_mcp, transport_security
 from startaste.sources.github.models import GithubStar
 from startaste.sources.hn.models import HnStory
 
@@ -78,6 +78,64 @@ class TestEndpoints:
             response = client.get("/.well-known/oauth-protected-resource")
         assert response.status_code == 404
         assert "startaste" not in response.text.lower()
+
+    def _init_body(self):
+        return {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": {"name": "probe", "version": "0"},
+            },
+        }
+
+    def _post_init(self, app, host):
+        # TestClient defaults to Host: testserver, so set it explicitly — the
+        # whole point here is which Host header the transport will accept.
+        with TestClient(app) as client:
+            return client.post(
+                "/mcp",
+                json=self._init_body(),
+                headers={
+                    "Authorization": "Bearer good-token",
+                    "Accept": "application/json, text/event-stream",
+                    "Host": host,
+                },
+            )
+
+    def test_proxied_public_host_is_accepted_when_declared(self, tokens_file):
+        # Regression: the transport's DNS-rebinding defence allowed only
+        # loopback, so behind an HTTPS reverse proxy every request came back
+        # 421 Invalid Host header.
+        app = build_app(tokens_file, allowed_hosts=["taste.example.com"])
+        response = self._post_init(app, "taste.example.com")
+        assert response.status_code != 421
+
+    def test_proxied_public_host_with_a_port_is_accepted(self, tokens_file):
+        app = build_app(tokens_file, allowed_hosts=["taste.example.com"])
+        response = self._post_init(app, "taste.example.com:443")
+        assert response.status_code != 421
+
+    def test_undeclared_host_is_still_refused(self, tokens_file):
+        # The defence must still hold: widening the list is not disabling it.
+        app = build_app(tokens_file, allowed_hosts=["taste.example.com"])
+        response = self._post_init(app, "evil.example.net")
+        assert response.status_code == 421
+
+    def test_loopback_needs_no_declaration(self, tokens_file):
+        app = build_app(tokens_file)
+        response = self._post_init(app, "127.0.0.1:8766")
+        assert response.status_code != 421
+
+    def test_declared_host_is_also_an_allowed_origin(self, tokens_file):
+        settings = transport_security(["taste.example.com"])
+        assert "https://taste.example.com" in settings.allowed_origins
+        assert "http://taste.example.com" in settings.allowed_origins
+
+    def test_rebinding_protection_stays_enabled(self, tokens_file):
+        assert transport_security(["taste.example.com"]).enable_dns_rebinding_protection is True
 
     def test_a_path_merely_prefixed_with_mcp_is_not_the_endpoint(self, tokens_file):
         # The guard matches "/mcp" and "/mcp/...", not any path starting with

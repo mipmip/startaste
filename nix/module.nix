@@ -136,6 +136,19 @@ in
       description = "Port for the MCP server. Must differ from dashboard.port.";
     };
 
+    mcp.publicHostname = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "taste.example.com";
+      description = ''
+        Public hostname this server is reached by, when an HTTPS reverse proxy
+        fronts it. The MCP transport checks the Host header against an allow-list
+        to defend against DNS rebinding, so a hostname forwarded by a proxy is
+        refused with 421 unless declared here. Loopback and listenAddress:port
+        are always accepted, so a mesh-only deployment can leave this null.
+      '';
+    };
+
     mcp.tokensFile = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default = null;
@@ -254,7 +267,7 @@ in
         after = [ "network.target" ];
         inherit environment;
         serviceConfig = common // {
-          ExecStart = lib.escapeShellArgs [
+          ExecStart = lib.escapeShellArgs ([
             "${cfg.package}/bin/startaste"
             "mcp"
             "--host"
@@ -263,7 +276,10 @@ in
             (toString cfg.mcp.port)
             "--tokens-file"
             (toString cfg.mcp.tokensFile)
-          ];
+          ] ++ lib.optionals (cfg.mcp.publicHostname != null) [
+            "--allowed-host"
+            cfg.mcp.publicHostname
+          ]);
           # The server opens the database read-only and refuses to create one,
           # so on a host that has never synced it exits until the first sync
           # run. Keep retrying indefinitely rather than exhausting the start

@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Fixed
+- MCP server behind an HTTPS reverse proxy answered every request `421 Invalid
+  Host header`. The transport's DNS-rebinding defence allowed only loopback,
+  because FastMCP auto-enables it for its default `127.0.0.1` host while the real
+  bind address only ever reached uvicorn. Declare the public hostname with
+  `--allowed-host` (or `services.startaste.mcp.publicHostname`); loopback and the
+  bound address are always accepted, and the defence stays enabled
 - MCP clients that follow the authorization flow (e.g. the Claude connector)
   could not connect: authentication guarded the whole server, so paths it does
   not serve — including the `/.well-known/` OAuth discovery paths — answered
