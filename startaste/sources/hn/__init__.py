@@ -3,15 +3,11 @@ from __future__ import annotations
 import logging
 import os
 
-from bs4 import BeautifulSoup
-
 from startaste.sources.base import Source
 from startaste.sources.hn.models import HnStory, HnComment
 from startaste.sources.hn.scraper import Req, get_credentials
 
 log = logging.getLogger(__name__)
-
-VERY_HIGH_PAGE = 10000
 
 
 class HnSource(Source):
@@ -48,10 +44,13 @@ class HnSource(Source):
         klass = "default" if comments else "subtext"
 
         if is_full:
-            all_ids = self._scrape_all(req, username, comments)
+            all_ids = self._scrape_all(req, username, comments, klass)
         else:
             all_ids = self._scrape_incremental(req, username, comments, klass, model)
 
+        # Store a listing in one go. A partially stored listing would leave the
+        # database non-empty, so the next run would take the incremental path,
+        # stop on the first page of known IDs, and silently abandon the rest.
         model.save_ids(all_ids)
 
         empty = model.list_empty()
@@ -64,48 +63,19 @@ class HnSource(Source):
             fetched += 1
             log.info(f"Got {label[:-1]} {item._id} ({fetched} of {count})")
 
-    def _scrape_all(self, req, username, comments):
-        if comments:
-            return req.get_upvoted_comments(username, VERY_HIGH_PAGE)
-        else:
-            return req.get_upvoted_stories(username, VERY_HIGH_PAGE)
+    def _scrape_all(self, req, username, comments, klass):
+        return req.scrape_ids(username, comments, klass)
 
     def _scrape_incremental(self, req, username, comments, klass, model):
-        import time
-
+        label = "comments" if comments else "stories"
         all_ids = []
-        page = 1
-        hackernews = "https://news.ycombinator.com"
 
-        while True:
-            time.sleep(0.5)
-            label = "comments" if comments else "stories"
-            log.debug(f"incremental: scraping {label} page {page}")
-
-            url = f"{hackernews}/upvoted?id={username}{'&comments=t' if comments else ''}&p={page}"
-            saved = req.get(url)
-            soup = BeautifulSoup(saved.content, features="html.parser")
-
-            page_ids = []
-            for tag in soup.find_all("td", attrs={"class": klass}):
-                if tag.a is not type(None):
-                    a_tags = tag.find_all("a")
-                    for a_tag in a_tags:
-                        if a_tag["href"][:5] == "item?":
-                            story_id = a_tag["href"].split("id=")[1]
-                            page_ids.append(story_id)
-                            break
-
-            if len(page_ids) == 0:
-                break
-
+        for page, page_ids in enumerate(req.iter_upvoted(username, comments, klass), start=1):
             all_known = all(model.has_id(_id) for _id in page_ids)
             all_ids.extend(page_ids)
 
             if all_known:
-                log.debug(f"incremental: all IDs on page {page} are known, stopping")
+                log.debug(f"incremental: all {label} IDs on page {page} are known, stopping")
                 break
-
-            page += 1
 
         return all_ids

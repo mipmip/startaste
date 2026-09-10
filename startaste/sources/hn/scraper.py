@@ -4,6 +4,8 @@ import logging
 import os
 import time
 
+from urllib.parse import urljoin
+
 import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
@@ -23,6 +25,7 @@ RETRY_STRAT = Retry(
     allowed_methods=["GET"],
 )
 ADAPTER = HTTPAdapter(max_retries=RETRY_STRAT)
+MAX_PAGES = 200
 
 
 def get_credentials() -> tuple[str, str]:
@@ -33,6 +36,26 @@ def get_credentials() -> tuple[str, str]:
     if not password:
         raise SystemExit("Error: HN_COMMENTS_PW not set in environment or .env")
     return username, password
+
+
+def extract_ids(soup: BeautifulSoup, klass: str) -> list[str]:
+    ids = []
+    for tag in soup.find_all("td", attrs={"class": klass}):
+        for a_tag in tag.find_all("a"):
+            href = a_tag.get("href", "")
+            if href.startswith("item?"):
+                ids.append(href.split("id=")[1])
+                break
+    return ids
+
+
+def next_page_url(soup: BeautifulSoup) -> str | None:
+    # HN paginates /upvoted with a cursor in the More link (next/n/time), not
+    # with a p= parameter — p= is ignored there and always returns page one.
+    more = soup.find("a", class_="morelink") or soup.find("a", rel="next")
+    if not more or not more.get("href"):
+        return None
+    return urljoin(f"{HACKERNEWS}/", more["href"])
 
 
 class Req:
@@ -56,35 +79,47 @@ class Req:
         if username not in str(auth.content):
             raise Exception("Hacker News didn't succeed, username not displayed.")
 
-    def scrape_ids(self, user: str, comments: bool, klass: str, max_page: int) -> list[str]:
-        ids = []
-        for page in range(1, max_page):
+    def iter_upvoted(
+        self, user: str, comments: bool, klass: str, max_page: int = MAX_PAGES
+    ):
+        """Yield the item IDs of each page of an upvoted listing, in order."""
+        label = "comments" if comments else "stories"
+        url = f"{HACKERNEWS}/upvoted?id={user}{'&comments=t' if comments else ''}"
+        collected = 0
+
+        for page in range(1, max_page + 1):
             time.sleep(0.5)
-            log.debug(f"saving {'comments' if comments else 'stories'} page {page}")
-            saved = self.get(
-                f"{HACKERNEWS}/upvoted?id={user}{'&comments=t' if comments else ''}&p={page}"
-            )
+            log.debug(f"scraping upvoted {label} page {page}")
+            saved = self.get(url)
             soup = BeautifulSoup(saved.content, features="html.parser")
-            page_ids = []
-            for tag in soup.find_all("td", attrs={"class": klass}):
-                if tag.a is not type(None):
-                    a_tags = tag.find_all("a")
-                    for a_tag in a_tags:
-                        if a_tag["href"][:5] == "item?":
-                            story_id = a_tag["href"].split("id=")[1]
-                            page_ids.append(story_id)
-                            break
-            if len(page_ids) == 0:
-                log.debug(f"BREAK {saved.content}")
-                break
-            else:
-                ids.extend(page_ids)
+
+            page_ids = extract_ids(soup, klass)
+            if not page_ids:
+                return
+
+            collected += len(page_ids)
+            yield page_ids
+
+            url = next_page_url(soup)
+            if url is None:
+                log.debug(f"no More link after {label} page {page}, listing complete")
+                return
+
+        log.warning(
+            f"stopped scraping upvoted {label} at the {max_page} page limit "
+            f"with {collected} IDs collected; the listing may be longer"
+        )
+
+    def scrape_ids(self, user: str, comments: bool, klass: str, max_page: int = MAX_PAGES) -> list[str]:
+        ids = []
+        for page_ids in self.iter_upvoted(user, comments, klass, max_page):
+            ids.extend(page_ids)
         return ids
 
-    def get_upvoted_stories(self, user: str, max_page: int) -> list[str]:
+    def get_upvoted_stories(self, user: str, max_page: int = MAX_PAGES) -> list[str]:
         return self.scrape_ids(user=user, comments=False, klass="subtext", max_page=max_page)
 
-    def get_upvoted_comments(self, user: str, max_page: int) -> list[str]:
+    def get_upvoted_comments(self, user: str, max_page: int = MAX_PAGES) -> list[str]:
         return self.scrape_ids(user=user, comments=True, klass="default", max_page=max_page)
 
     def get_item(self, item_id: str) -> dict:

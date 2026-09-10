@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Fixed
+- HN sync now follows the `More` cursor on `/upvoted` instead of a `p=` page
+  parameter Hacker News ignores there — a full sync no longer loops over page
+  one and discards everything it scraped
+- HN page traversal is bounded (200 pages) and warns when the bound is reached
 - `.env` is now loaded from the working directory by every subcommand, so
   installed builds (nix package, `nix run`, virtualenv) pick up credentials
   again instead of only working from a source checkout

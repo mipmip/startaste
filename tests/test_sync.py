@@ -1,6 +1,7 @@
 import json
 import os
 
+import pytest
 import responses
 
 from startaste.db import database
@@ -10,6 +11,10 @@ from tests.conftest import load_fixture
 
 HN = "https://news.ycombinator.com"
 API = "https://hacker-news.firebaseio.com/v0/item"
+
+STORIES = f"{HN}/upvoted?id=testuser"
+COMMENTS = f"{HN}/upvoted?id=testuser&comments=t"
+CURSOR = f"{HN}/upvoted?id=testuser&next=44444&n=31&time=1.787635665137972e9"
 
 
 def _mock_login():
@@ -36,11 +41,10 @@ class TestFullSync:
 
         _mock_login()
 
-        responses.get(f"{HN}/upvoted?id=testuser&p=1", body=load_fixture("hn_stories_page1.html"))
-        responses.get(f"{HN}/upvoted?id=testuser&p=2", body=load_fixture("hn_stories_empty.html"))
+        responses.get(STORIES, body=load_fixture("hn_stories_page1.html"))
+        responses.get(CURSOR, body=load_fixture("hn_stories_empty.html"))
 
-        responses.get(f"{HN}/upvoted?id=testuser&comments=t&p=1", body=load_fixture("hn_comments_page1.html"))
-        responses.get(f"{HN}/upvoted?id=testuser&comments=t&p=2", body=load_fixture("hn_stories_empty.html"))
+        responses.get(COMMENTS, body=load_fixture("hn_comments_page1.html"))
 
         for item_id in ["11111", "22222", "33333"]:
             _mock_item(item_id, "story")
@@ -70,11 +74,10 @@ class TestIncrementalSync:
 
         _mock_login()
 
-        responses.get(f"{HN}/upvoted?id=testuser&p=1", body=load_fixture("hn_stories_page1.html"))
-        responses.get(f"{HN}/upvoted?id=testuser&p=2", body=load_fixture("hn_stories_empty.html"))
+        responses.get(STORIES, body=load_fixture("hn_stories_page1.html"))
+        responses.get(CURSOR, body=load_fixture("hn_stories_empty.html"))
 
-        responses.get(f"{HN}/upvoted?id=testuser&comments=t&p=1", body=load_fixture("hn_comments_page1.html"))
-        responses.get(f"{HN}/upvoted?id=testuser&comments=t&p=2", body=load_fixture("hn_stories_empty.html"))
+        responses.get(COMMENTS, body=load_fixture("hn_comments_page1.html"))
 
         for item_id in ["22222", "33333"]:
             _mock_item(item_id, "story")
@@ -102,11 +105,10 @@ class TestIncrementalSync:
 
         _mock_login()
 
-        responses.get(f"{HN}/upvoted?id=testuser&p=1", body=load_fixture("hn_stories_page1.html"))
-        responses.get(f"{HN}/upvoted?id=testuser&p=2", body=load_fixture("hn_stories_page2.html"))
+        responses.get(STORIES, body=load_fixture("hn_stories_page1.html"))
+        responses.get(CURSOR, body=load_fixture("hn_stories_page2.html"))
 
-        responses.get(f"{HN}/upvoted?id=testuser&comments=t&p=1", body=load_fixture("hn_comments_page1.html"))
-        responses.get(f"{HN}/upvoted?id=testuser&comments=t&p=2", body=load_fixture("hn_stories_empty.html"))
+        responses.get(COMMENTS, body=load_fixture("hn_comments_page1.html"))
 
         for item_id in ["66666", "77777"]:
             _mock_item(item_id, "comment")
@@ -117,3 +119,26 @@ class TestIncrementalSync:
         assert HnStory.count_all() == 3
         assert HnStory.count_empty() == 0
         assert HnComment.count_all() == 2
+        # stopped on the first page of known IDs — page two was never followed
+        assert not HnStory.has_id("44444")
+
+
+class TestInterruptedScrape:
+    @responses.activate
+    def test_failure_mid_walk_stores_nothing(self, monkeypatch):
+        # A partially stored listing would send the next run down the
+        # incremental path, where it stops on the first known page and abandons
+        # the rest — so an interrupted walk must leave the table empty.
+        monkeypatch.setenv("HN_COMMENTS_ACCT", "testuser")
+        monkeypatch.setenv("HN_COMMENTS_PW", "testpass")
+
+        _mock_login()
+
+        responses.get(STORIES, body=load_fixture("hn_stories_page1.html"))
+        responses.get(CURSOR, body=ConnectionError("connection reset"))
+
+        source = HnSource()
+        with pytest.raises(Exception):
+            source.sync()
+
+        assert HnStory.count_all() == 0

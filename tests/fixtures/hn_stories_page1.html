@@ -1,17 +1,23 @@
 <html><body><table>
-  <tr><td class="title"><a href="https://example.com/story1">Test Story One</a></td></tr>
-  <tr><td class="subtext">
-    <span class="score" id="score_11111">42 points</span> by <a href="user?id=alice">alice</a>
-    <a href="item?id=11111">13 comments</a>
-  </td></tr>
-  <tr><td class="title"><a href="https://example.com/story2">Test Story Two</a></td></tr>
-  <tr><td class="subtext">
-    <span class="score" id="score_22222">100 points</span> by <a href="user?id=bob">bob</a>
-    <a href="item?id=22222">27 comments</a>
-  </td></tr>
-  <tr><td class="title"><a href="https://example.com/story3">Test Story Three</a></td></tr>
-  <tr><td class="subtext">
-    <span class="score" id="score_33333">7 points</span> by <a href="user?id=carol">carol</a>
-    <a href="item?id=33333">2 comments</a>
-  </td></tr>
+  <tr class="athing" id="11111"><td class="title"><span class="titleline"><a href="https://example.com/story1">Test Story One</a></span></td></tr>
+  <tr><td class="subtext"><span class="subline">
+    <span class="score" id="score_11111">42 points</span> by <a class="hnuser" href="user?id=alice">alice</a>
+    <span class="age" title="2026-09-08T18:37:51.000000Z"><a href="item?id=11111">1 day ago</a></span>
+    | <a href="flag?id=11111&amp;auth=deadbeef&amp;goto=upvoted%3Fid%3Dtestuser" rel="nofollow">flag</a>
+    | <a href="item?id=11111">13&nbsp;comments</a>
+  </span></td></tr>
+  <tr class="athing" id="22222"><td class="title"><span class="titleline"><a href="https://example.com/story2">Test Story Two</a></span></td></tr>
+  <tr><td class="subtext"><span class="subline">
+    <span class="score" id="score_22222">100 points</span> by <a class="hnuser" href="user?id=bob">bob</a>
+    <span class="age" title="2026-09-07T09:12:03.000000Z"><a href="item?id=22222">2 days ago</a></span>
+    | <a href="item?id=22222">27&nbsp;comments</a>
+  </span></td></tr>
+  <tr class="athing" id="33333"><td class="title"><span class="titleline"><a href="https://example.com/story3">Test Story Three</a></span></td></tr>
+  <tr><td class="subtext"><span class="subline">
+    <span class="score" id="score_33333">7 points</span> by <a class="hnuser" href="user?id=carol">carol</a>
+    <span class="age" title="2026-09-06T11:00:00.000000Z"><a href="item?id=33333">3 days ago</a></span>
+    | <a href="item?id=33333">2&nbsp;comments</a>
+  </span></td></tr>
+  <tr class="morespace"></tr>
+  <tr><td class="title"><a class="morelink" href="upvoted?id=testuser&amp;next=44444&amp;n=31&amp;time=1.787635665137972e9" rel="next">More</a></td></tr>
 </table></body></html>
