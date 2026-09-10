@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+- NixOS module (`nixosModules.startaste`) and overlay (`overlays.default`):
+  scheduled sync on a systemd timer and the dashboard as hardened units, with
+  state under `/var/lib/startaste` and credentials from an `environmentFile`
+- Flake now provides `packages` and `devShells` for `x86_64-linux` and
+  `aarch64-linux` instead of a single hardcoded system
+
+### Changed
+- `startaste serve` takes `--host` (default `127.0.0.1`, unchanged behaviour).
+  The dashboard has no authentication, so only widen it on a trusted network
+
 ### Fixed
 - The database is opened in WAL mode with a busy timeout, so reading (dashboard,
   export) while a sync is writing no longer fails with "database is locked" —

@@ -79,6 +79,12 @@ def main():
     # serve
     serve_parser = subparsers.add_parser("serve", help="Start local dashboard web server")
     serve_parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Address to bind (default: 127.0.0.1). The dashboard has no "
+             "authentication — only widen this on a trusted network.",
+    )
+    serve_parser.add_argument(
         "--port",
         type=int,
         default=8421,
@@ -105,5 +111,5 @@ def main():
     elif args.command == "serve":
         from startaste.dashboard import create_app
         app = create_app()
-        print(f"Starting dashboard at http://localhost:{args.port}")
-        app.run(host="127.0.0.1", port=args.port)
+        print(f"Starting dashboard at http://{args.host}:{args.port}")
+        app.run(host=args.host, port=args.port)
