@@ -4,6 +4,7 @@ import logging
 import pytest
 import responses
 
+from startaste.sources.base import SourceAuthError
 from startaste.sources.hn.scraper import Req
 from tests.conftest import load_fixture
 
@@ -28,8 +29,10 @@ class TestLogin:
     def test_login_failure_bad_credentials(self):
         responses.post(f"{HN}/login", body=load_fixture("hn_login_failure.html"), status=200)
         req = Req()
-        with pytest.raises(Exception, match="authentication failed"):
+        with pytest.raises(SourceAuthError) as excinfo:
             req.login("testuser", "wrongpassword")
+        assert excinfo.value.source == "hn"
+        assert excinfo.value.env_vars == ["HN_COMMENTS_ACCT", "HN_COMMENTS_PW"]
 
 
 class TestScrapeStories:

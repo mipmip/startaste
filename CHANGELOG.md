@@ -24,6 +24,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
   The dashboard has no authentication, so only widen it on a trusted network
 
 ### Fixed
+- A rejected credential is now reported like a missing one — one line naming the
+  variable and how to renew it, with no traceback. Rate limiting and an
+  unreachable service are reported as themselves rather than blamed on the token
+- One source failing no longer aborts the others: `startaste sync` reports the
+  failure, syncs the remaining sources, then exits non-zero naming what failed
 - `release.sh` now checks that jj can actually operate in the checkout, not just
   that it is installed — previously a plain git checkout failed part-way through
   a release, after VERSION and the changelog had been rewritten

@@ -11,6 +11,8 @@ from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
+from startaste.sources.base import SourceAuthError, SourceUnavailableError
+
 log = logging.getLogger(__name__)
 
 HACKERNEWS = "https://news.ycombinator.com"
@@ -71,13 +73,29 @@ class Req:
     def post(self, url: str, data: dict[str, str]) -> requests.Response:
         return self._http.post(url, data=data, headers=HEADERS, timeout=30)
 
+    HN_ENV_VARS = ["HN_COMMENTS_ACCT", "HN_COMMENTS_PW"]
+
     def login(self, username: str, password: str) -> None:
         payload = {"whence": "news", "acct": username, "pw": password}
-        auth = self.post(f"{HACKERNEWS}/login", data=payload)
+        try:
+            auth = self.post(f"{HACKERNEWS}/login", data=payload)
+        except requests.RequestException as exc:
+            raise SourceUnavailableError(
+                "hn", f"could not reach Hacker News to log in ({type(exc).__name__})"
+            ) from None
+
         if "Bad login" in str(auth.content) or auth.status_code != 200:
-            raise Exception("Hacker News authentication failed!")
+            raise SourceAuthError(
+                "hn",
+                "Hacker News refused the account and password",
+                self.HN_ENV_VARS,
+            ) from None
         if username not in str(auth.content):
-            raise Exception("Hacker News didn't succeed, username not displayed.")
+            raise SourceAuthError(
+                "hn",
+                f"logged in but Hacker News did not show {username} as signed in",
+                self.HN_ENV_VARS,
+            ) from None
 
     def iter_upvoted(
         self, user: str, comments: bool, klass: str, max_page: int = MAX_PAGES
