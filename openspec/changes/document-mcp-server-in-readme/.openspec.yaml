@@ -1,0 +1,9 @@
+schema: tinychange
+created: 2026-09-11
+skip_specs: true
+skip_specs_reason: >-
+  Documentation-only change. The MCP behaviour is already specified in
+  specs/mcp-server and specs/cli; the README simply catches up with it, so
+  there is no behavioural delta to record.
+bean: ../../../.beans/startaste-sea0--update-readme-with-new-mcp-server-functionality.md
+schema_source: https://github.com/speclib/openspec-tinychange-schema

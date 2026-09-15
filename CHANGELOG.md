@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+- README documents the MCP server: minting a token, the tokens file, the `mcp`
+  subcommand's options and defaults, the `/mcp` and `/healthz` paths, the seven
+  read-only tools, and which port each server listens on
+
 ### Fixed
 - MCP server behind an HTTPS reverse proxy answered every request `421 Invalid
   Host header`. The transport's DNS-rebinding defence allowed only loopback,

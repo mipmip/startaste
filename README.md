@@ -89,12 +89,85 @@ startaste serve                   # http://localhost:8421
 startaste serve --port 9000       # custom port
 ```
 
+### MCP server
+
+Expose your collection to MCP clients (Claude and friends) over streamable
+HTTP. The server opens the database **read-only** — no tool it offers can change
+your data — so it is safe to put behind an HTTPS reverse proxy. Run
+`startaste sync` first; the MCP server refuses to create a database.
+
+**1. Mint a token.** Tokens are never stored in recoverable form, only as
+SHA-256 hashes, so the raw value is shown exactly once:
+
+```sh
+startaste mcp-token --name laptop
+```
+
+It prints the token plus the record to add to your tokens file. That file is
+JSON — either a bare list of records, or `{"tokens": [...]}`:
+
+```json
+[{"name": "laptop", "hash": "b92e06f3…e669", "scopes": ["read"]}]
+```
+
+**2. Serve it.**
+
+```sh
+startaste mcp --tokens-file /var/lib/startaste/tokens.json
+startaste mcp --tokens-file tokens.json --port 9100
+startaste mcp --tokens-file tokens.json --allowed-host taste.example.com
+```
+
+Options:
+
+- `--tokens-file` — **required**, path to the JSON token records above. With no
+  readable file the server exits rather than serving unauthenticated.
+- `--host` — address to bind (default: `127.0.0.1`). TLS terminates upstream.
+- `--port` — port to serve on (default: `8766`).
+- `--allowed-host` — public hostname this server is reached by. Repeatable.
+  Needed when an HTTPS reverse proxy fronts it: the transport checks the `Host`
+  header against an allow-list to block DNS rebinding, and a forwarded public
+  hostname is otherwise refused with `421`. Loopback and the bound address are
+  always allowed, so a local or mesh-only deployment needs nothing here.
+
+Two paths are served:
+
+| Path       | Auth                    | Purpose                             |
+|------------|-------------------------|-------------------------------------|
+| `/mcp`     | `Authorization: Bearer` | The MCP endpoint                    |
+| `/healthz` | none                    | Liveness, for a proxy or monitoring |
+
+Anything else answers `404`. Point your client at `https://<host>/mcp` with the
+token as a bearer credential.
+
+**3. What a client gets.**
+
+| Tool             | Returns                                                     |
+|------------------|-------------------------------------------------------------|
+| `overview`       | Per-source counts and when each last had new data           |
+| `search_stars`   | Starred repos by text, language and/or topic                |
+| `search_upvotes` | Upvoted HN items by text, optionally story- or comment-only |
+| `get_item`       | One stored item in full, by source and id                   |
+| `top_topics`     | Most common GitHub topics, by count                         |
+| `top_languages`  | Most common languages across starred repos                  |
+| `top_domains`    | Most upvoted HN domains, by count                           |
+
+Results are bounded by a `limit` (default 20) and say whether they were
+truncated.
+
+The two servers listen on different ports and are enabled independently:
+
+| Server    | Command           | Default port | Auth         |
+|-----------|-------------------|--------------|--------------|
+| Dashboard | `startaste serve` | `8421`       | none (local) |
+| MCP       | `startaste mcp`   | `8766`       | bearer token |
+
 ### Sources
 
-| Source | Item Types | Env Vars |
-|--------|-----------|----------|
-| `hn` | `story`, `comment` | `HN_COMMENTS_ACCT`, `HN_COMMENTS_PW` |
-| `github` | `star` | `GITHUB_TOKEN` |
+| Source   | Item Types         | Env Vars                             |
+|----------|--------------------|--------------------------------------|
+| `hn`     | `story`, `comment` | `HN_COMMENTS_ACCT`, `HN_COMMENTS_PW` |
+| `github` | `star`             | `GITHUB_TOKEN`                       |
 
 Adding a new source: create a module under `startaste/sources/<name>/` implementing the `Source` protocol (see `startaste/sources/base.py`), then register it in `startaste/sources/__init__.py`.
 
@@ -102,12 +175,12 @@ Adding a new source: create a module under `startaste/sources/<name>/` implement
 
 By default, startaste follows the [XDG Base Directory](https://specifications.freedesktop.org/basedir-spec/latest/) convention:
 
-| File | Default path | Env var override |
-|------|-------------|-----------------|
-| Database | `~/.local/share/startaste/startaste.db` | `STARTASTE_DB` |
-| Log | `~/.local/state/startaste/startaste.log` | `STARTASTE_LOG` |
-| Data dir | `~/.local/share/startaste/` | `STARTASTE_DATA` |
-| State dir | `~/.local/state/startaste/` | `STARTASTE_STATE` |
+| File      | Default path                             | Env var override  |
+|-----------|------------------------------------------|-------------------|
+| Database  | `~/.local/share/startaste/startaste.db`  | `STARTASTE_DB`    |
+| Log       | `~/.local/state/startaste/startaste.log` | `STARTASTE_LOG`   |
+| Data dir  | `~/.local/share/startaste/`              | `STARTASTE_DATA`  |
+| State dir | `~/.local/state/startaste/`              | `STARTASTE_STATE` |
 
 Directories are created automatically on first run. For service/daemon deployment, override via env vars (e.g. `STARTASTE_DATA=/var/lib/startaste`).
 
